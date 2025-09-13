@@ -148,17 +148,37 @@ class Program
 
     static bool TryParseNumber(string s, out double value)
     {
-        // сначала инвариантная культура с точкой
-        if (double.TryParse(s, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out value))
+        // 1) Пробуем как в текущей культуре
+        if (double.TryParse(
+                s,
+                NumberStyles.Float | NumberStyles.AllowThousands,
+                CultureInfo.CurrentCulture,
+                out value))
             return true;
 
-        // затем текущая культура
-        if (double.TryParse(s, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.CurrentCulture, out value))
+        // 2) Пробуем как в "инвариантной" культуре (с точкой)
+        if (double.TryParse(
+                s,
+                NumberStyles.Float | NumberStyles.AllowThousands,
+                CultureInfo.InvariantCulture,
+                out value))
             return true;
 
-        // последняя попытка — поменять . и ,
-        string swapped = s.Contains(',') ? s.Replace(',', '.') : s.Replace('.', ',');
-        return double.TryParse(swapped, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.CurrentCulture, out value);
+        // 3) Пробуем вручную поменять разделитель
+        string swapped;
+        if (s.Contains(','))
+            swapped = s.Replace(',', '.');
+        else
+            swapped = s.Replace('.', ',');
+
+        // Попробуем обе культуры на "переключённой" строке
+        if (double.TryParse(swapped, NumberStyles.Float, CultureInfo.CurrentCulture, out value))
+            return true;
+
+        if (double.TryParse(swapped, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+            return true;
+
+        return false;
     }
 
     static void Print(double current, double memory)
