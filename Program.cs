@@ -8,11 +8,11 @@ class Program
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
         double current = 0.0;          // текущее значение
-        double memory = 0.0;          // память (MR)
-        string? pendingOp = null;      // отложенная бинарная операция: "+", "-", "*", "/", "%"
+        double memory = 0.0;          // память
+        string? pendingOp = null;      // операции с двумя числами (бинарные): "+", "-", "*", "/", "%"
         bool expectNumber = true;      // ожидаем число после выбора бинарной операции
 
-        Console.WriteLine("Простой пошаговый калькулятор. Введите число или операцию. Команды: + - * / % sqrt 1/x x^2 m+ m- mr mc c exit");
+        Console.WriteLine("Простой калькулятор. Введите число или операцию. Команды: + - * / % sqrt 1/x x^2 m+ m- mr mc c exit");
         while (true)
         {
             Console.Write("Введите число/операцию: ");
@@ -23,7 +23,7 @@ class Program
 
             try
             {
-                // 1) Попытка распознать число (разрешаем и точку, и запятую)
+                // Попытка распознать число
                 if (TryParseNumber(token, out double num))
                 {
                     if (pendingOp == null)
@@ -36,13 +36,13 @@ class Program
                         // Применяем отложенную бинарную операцию
                         current = ApplyBinary(pendingOp, current, num);
                         pendingOp = null;
-                        expectNumber = true; // снова ждём число/операцию — одинаково ведём себя
+                        expectNumber = true; // снова ждём число/операцию
                     }
                     Print(current, memory);
                     continue;
                 }
 
-                // 2) Иначе — операция/команда
+                // Не число => операция/команда
                 switch (token)
                 {
                     case "exit": return;
@@ -53,7 +53,7 @@ class Program
                         Print(current, memory);
                         break;
 
-                    // бинарные операции — просто запоминаем, дальше ждём число
+                    // бинарные операции просто запоминаем, дальше ждём число
                     case "+":
                     case "-":
                     case "*":
@@ -61,10 +61,10 @@ class Program
                     case "%":
                         pendingOp = token;
                         expectNumber = true;
-                        // Для удобства сразу просим число следующей строкой
+                        // сразу просим число следующей строкой
                         break;
 
-                    // унарные операции — применяем немедленно к current
+                    // унарные операции применяем немедленно к current
                     case "sqrt":
                         if (current < 0) throw new ArithmeticException("sqrt для отрицательного числа не определён.");
                         current = Math.Sqrt(current);
@@ -72,40 +72,40 @@ class Program
                         break;
 
                     case "1/x":
-                    case "inv":
+                    case "inv": // альтернативное имя
                         if (current == 0) throw new DivideByZeroException("1/x при x=0 не определено.");
                         current = 1.0 / current;
                         Print(current, memory);
                         break;
 
                     case "x^2":
-                    case "sqr":
+                    case "sqr": // альтернативное имя
                         current = current * current;
                         Print(current, memory);
                         break;
 
-                    // память: работает с текущим значением (как в классических калькуляторах)
+                    // память: работает с текущим значением
                     case "m+":
                         memory += current;
-                        Console.WriteLine("Память увеличена на текущее значение.");
+                        Console.WriteLine("Память увеличена на текущее значение");
                         Print(current, memory);
                         break;
 
                     case "m-":
                         memory -= current;
-                        Console.WriteLine("Память уменьшена на текущее значение.");
+                        Console.WriteLine("Память уменьшена на текущее значение");
                         Print(current, memory);
                         break;
 
                     case "mr":
                         current = memory;
-                        Console.WriteLine("Память считана в текущее.");
+                        Console.WriteLine("Память считана в текущее");
                         Print(current, memory);
                         break;
 
                     case "mc":
                         memory = 0.0;
-                        Console.WriteLine("Память очищена.");
+                        Console.WriteLine("Память очищена");
                         Print(current, memory);
                         break;
 
@@ -117,7 +117,7 @@ class Program
             catch (DivideByZeroException ex)
             {
                 Console.WriteLine("Ошибка: " + ex.Message);
-                pendingOp = null; // сбрасываем опасное состояние
+                pendingOp = null; // сбрасываем состояние
             }
             catch (ArithmeticException ex)
             {
@@ -141,10 +141,12 @@ class Program
             "-" => a - b,
             "*" => a * b,
             "/" => b == 0 ? throw new DivideByZeroException("Деление на ноль.") : a / b,
-            "%" => b == 0 ? throw new DivideByZeroException("Остаток от деления на ноль.") : a % b, // % для double — остаток IEEE-754
+            "%" => b == 0 ? throw new DivideByZeroException("Остаток от деления на ноль.") : a % b,
             _ => throw new InvalidOperationException("Неизвестная бинарная операция.")
         };
     }
+
+    // Шаманим с . и , чтобы распознать число
 
     static bool TryParseNumber(string s, out double value)
     {
