@@ -24,7 +24,7 @@ class Program
             try
             {
                 // Попытка распознать число
-                if (TryParseNumber(token, out double num))
+                if (double.TryParse(token, out double num))
                 {
                     if (pendingOp == null)
                     {
@@ -42,7 +42,7 @@ class Program
                     continue;
                 }
 
-                // Не число => операция/команда
+                // Не число => операция
                 switch (token)
                 {
                     case "exit": return;
@@ -66,14 +66,14 @@ class Program
 
                     // унарные операции применяем немедленно к current
                     case "sqrt":
-                        if (current < 0) throw new ArithmeticException("sqrt для отрицательного числа не определён.");
+                        if (current < 0) throw new ArithmeticException("sqrt для отрицательного числа не определён");
                         current = Math.Sqrt(current);
                         Print(current, memory);
                         break;
 
                     case "1/x":
                     case "inv": // альтернативное имя
-                        if (current == 0) throw new DivideByZeroException("1/x при x=0 не определено.");
+                        if (current == 0) throw new DivideByZeroException("1/x при x=0 не определено");
                         current = 1.0 / current;
                         Print(current, memory);
                         break;
@@ -140,51 +140,14 @@ class Program
             "+" => a + b,
             "-" => a - b,
             "*" => a * b,
-            "/" => b == 0 ? throw new DivideByZeroException("Деление на ноль.") : a / b,
-            "%" => b == 0 ? throw new DivideByZeroException("Остаток от деления на ноль.") : a % b,
-            _ => throw new InvalidOperationException("Неизвестная бинарная операция.")
+            "/" => b == 0 ? throw new DivideByZeroException("Деление на ноль") : a / b,
+            "%" => b == 0 ? throw new DivideByZeroException("Остаток от деления на ноль") : a % b,
+            _ => throw new InvalidOperationException("Неизвестная бинарная операция")
         };
-    }
-
-    // Шаманим с . и , чтобы распознать число
-
-    static bool TryParseNumber(string s, out double value)
-    {
-        // 1) Пробуем как в текущей культуре
-        if (double.TryParse(
-                s,
-                NumberStyles.Float | NumberStyles.AllowThousands,
-                CultureInfo.CurrentCulture,
-                out value))
-            return true;
-
-        // 2) Пробуем как в "инвариантной" культуре (с точкой)
-        if (double.TryParse(
-                s,
-                NumberStyles.Float | NumberStyles.AllowThousands,
-                CultureInfo.InvariantCulture,
-                out value))
-            return true;
-
-        // 3) Пробуем вручную поменять разделитель
-        string swapped;
-        if (s.Contains(','))
-            swapped = s.Replace(',', '.');
-        else
-            swapped = s.Replace('.', ',');
-
-        // Попробуем обе культуры на "переключённой" строке
-        if (double.TryParse(swapped, NumberStyles.Float, CultureInfo.CurrentCulture, out value))
-            return true;
-
-        if (double.TryParse(swapped, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
-            return true;
-
-        return false;
     }
 
     static void Print(double current, double memory)
     {
-        Console.WriteLine("Вывод: " + current.ToString(CultureInfo.InvariantCulture) + $" (память: {memory.ToString(CultureInfo.InvariantCulture)})");
+        Console.WriteLine("Вывод: " + current.ToString() + $" (память: {memory.ToString()})");
     }
 }
